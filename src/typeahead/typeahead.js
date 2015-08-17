@@ -33,6 +33,7 @@ var Typeahead = (function() {
 
     this.eventBus = o.eventBus;
     this.minLength = _.isNumber(o.minLength) ? o.minLength : 1;
+    this.autoselect = !!o.autoselect;
 
     this.input = o.input;
     this.menu = o.menu;
@@ -133,6 +134,9 @@ var Typeahead = (function() {
 
     _onDatasetRendered: function onDatasetRendered(type, dataset, suggestions, async) {
       this._updateHint();
+      if (this.autoselect) {
+        this.menu.setCursor(this.menu.getTopSelectable());
+      }
       this.eventBus.trigger('render', suggestions, async, dataset);
     },
 
@@ -162,6 +166,10 @@ var Typeahead = (function() {
       var $selectable;
 
       if ($selectable = this.menu.getActiveSelectable()) {
+        this.select($selectable) && $e.preventDefault();
+      }
+
+      else if (this.autoselect && ($selectable = this.menu.getTopSelectable())) {
         this.select($selectable) && $e.preventDefault();
       }
     },
