@@ -73,6 +73,7 @@ describe('Typeahead', function() {
         this.$input.on('typeahead:asyncrequest', spy);
         this.menu.trigger(eventName);
         expect(spy).toHaveBeenCalled();
+        expect(spy.mostRecentCall.args.length).toBe(3);
     });
   });
 
@@ -89,6 +90,7 @@ describe('Typeahead', function() {
         this.$input.on('typeahead:asynccancel', spy);
         this.menu.trigger(eventName);
         expect(spy).toHaveBeenCalled();
+        expect(spy.mostRecentCall.args.length).toBe(3);
     });
   });
 
@@ -105,6 +107,7 @@ describe('Typeahead', function() {
         this.$input.on('typeahead:asyncreceive', spy);
         this.menu.trigger(eventName);
         expect(spy).toHaveBeenCalled();
+        expect(spy.mostRecentCall.args.length).toBe(3);
     });
   });
 
@@ -149,6 +152,7 @@ describe('Typeahead', function() {
         this.$input.on('typeahead:render', spy);
         this.menu.trigger(eventName);
         expect(spy).toHaveBeenCalled();
+        expect(spy.mostRecentCall.args.length).toBe(4);
       });
     });
   });
@@ -254,6 +258,7 @@ describe('Typeahead', function() {
       this.input.trigger(eventName);
 
       expect(spy).toHaveBeenCalled();
+      expect(spy.mostRecentCall.args.length).toBe(2);
     });
 
     it('should not trigger typeahead:change if query has not changed since focus', function() {
@@ -1202,6 +1207,7 @@ describe('Typeahead', function() {
       this.view.select($('<bah>'));
 
       expect(spy).toHaveBeenCalled();
+      expect(spy.mostRecentCall.args.length).toBe(2);
     });
 
     it('should support cancellation', function() {
@@ -1234,6 +1240,7 @@ describe('Typeahead', function() {
       this.view.select($('<bah>'));
 
       expect(spy).toHaveBeenCalled();
+      expect(spy.mostRecentCall.args.length).toBe(3);
     });
 
     it('should close', function() {
@@ -1268,6 +1275,7 @@ describe('Typeahead', function() {
       this.view.autocomplete($('<bah>'));
 
       expect(spy).toHaveBeenCalled();
+      expect(spy.mostRecentCall.args.length).toBe(2);
     });
 
     it('should support cancellation', function() {
@@ -1348,6 +1356,7 @@ describe('Typeahead', function() {
       this.$input.on('typeahead:beforecursorchange', spy);
       this.view.moveCursor(1);
       expect(spy).toHaveBeenCalled();
+      expect(spy.mostRecentCall.args.length).toBe(2);
     });
 
     it('should support cancellation', function() {
@@ -1390,6 +1399,7 @@ describe('Typeahead', function() {
       this.$input.on('typeahead:cursorchange', spy);
       this.view.moveCursor(1);
       expect(spy).toHaveBeenCalled();
+      expect(spy.mostRecentCall.args.length).toBe(2);
     });
   });
 

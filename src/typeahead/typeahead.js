@@ -137,19 +137,19 @@ var Typeahead = (function() {
       if (this.autoselect) {
         this.menu.setCursor(this.menu.getTopSelectable());
       }
-      this.eventBus.trigger('render', suggestions, async, dataset);
+      this.eventBus.trigger('render', [suggestions, async, dataset]);
     },
 
     _onAsyncRequested: function onAsyncRequested(type, dataset, query) {
-      this.eventBus.trigger('asyncrequest', query, dataset);
+      this.eventBus.trigger('asyncrequest', [query, dataset]);
     },
 
     _onAsyncCanceled: function onAsyncCanceled(type, dataset, query) {
-      this.eventBus.trigger('asynccancel', query, dataset);
+      this.eventBus.trigger('asynccancel', [query, dataset]);
     },
 
     _onAsyncReceived: function onAsyncReceived(type, dataset, query) {
-      this.eventBus.trigger('asyncreceive', query, dataset);
+      this.eventBus.trigger('asyncreceive', [query, dataset]);
     },
 
     _onFocused: function onFocused() {
@@ -158,7 +158,7 @@ var Typeahead = (function() {
 
     _onBlurred: function onBlurred() {
       if (this.input.hasQueryChangedSinceLastFocus()) {
-        this.eventBus.trigger('change', this.input.getQuery());
+        this.eventBus.trigger('change', [this.input.getQuery()]);
       }
     },
 
@@ -358,7 +358,7 @@ var Typeahead = (function() {
       data = this.menu.getSelectableData($selectable);
       dataset = this.menu.getSelectableDataset($selectable);
 
-      if (data && !this.eventBus.before('select', data.obj)) {
+      if (data && !this.eventBus.before('select', [data.obj])) {
         this.input.setQuery(data.val, true);
 
         this.eventBus.trigger('select', [data.obj, dataset]);
@@ -378,9 +378,9 @@ var Typeahead = (function() {
       data = this.menu.getSelectableData($selectable);
       isValid = data && query !== data.val;
 
-      if (isValid && !this.eventBus.before('autocomplete', data.obj)) {
+      if (isValid && !this.eventBus.before('autocomplete', [data.obj])) {
         this.input.setQuery(data.val);
-        this.eventBus.trigger('autocomplete', data.obj);
+        this.eventBus.trigger('autocomplete', [data.obj]);
 
         // return true if autocompletion succeeded
         return true;
@@ -401,7 +401,7 @@ var Typeahead = (function() {
       // need to be fetched – in this case we don't want to move the cursor
       cancelMove = this._minLengthMet() && this.menu.update(query);
 
-      if (!cancelMove && !this.eventBus.before('cursorchange', payload)) {
+      if (!cancelMove && !this.eventBus.before('cursorchange', [payload])) {
         this.menu.setCursor($candidate);
 
         // cursor moved to different selectable
@@ -415,7 +415,7 @@ var Typeahead = (function() {
           this._updateHint();
         }
 
-        this.eventBus.trigger('cursorchange', payload);
+        this.eventBus.trigger('cursorchange', [payload]);
 
         // return true if move succeeded
         return true;
