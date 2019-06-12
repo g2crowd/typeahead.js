@@ -1,7 +1,7 @@
 /*!
  * typeahead.js 0.11.1
  * https://github.com/twitter/typeahead.js
- * Copyright 2013-2015 Twitter, Inc. and other contributors; Licensed MIT
+ * Copyright 2013-2019 Twitter, Inc. and other contributors; Licensed MIT
  */
 
 (function(root, factory) {
@@ -9,10 +9,10 @@
         define("typeahead.js", [ "jquery" ], function(a0) {
             return factory(a0);
         });
-    } else if (typeof exports === "object") {
+    } else if (typeof module === "object" && module.exports) {
         module.exports = factory(require("jquery"));
     } else {
-        factory(jQuery);
+        factory(root["jQuery"]);
     }
 })(this, function($) {
     var _ = function() {
@@ -673,7 +673,7 @@
             this.source = o.source.__ttAdapter ? o.source.__ttAdapter() : o.source;
             this.async = _.isUndefined(o.async) ? this.source.length > 2 : !!o.async;
             this._resetLastSuggestion();
-            this.$el = $(o.node).addClass(this.classes.dataset).addClass(this.classes.dataset + "-" + this.name);
+            this.$el = $(o.node).addClass(this.classes.dataset).addClass(this.classes.dataset + "-" + this.name).data("ttDataset", this.name);
         }
         Dataset.extractData = function extractData(el) {
             var $el = $(el);
@@ -807,8 +807,8 @@
                     suggestions = suggestions || [];
                     if (!canceled && rendered < that.limit) {
                         that.cancel = $.noop;
-                        rendered += suggestions.length;
                         that._append(query, suggestions.slice(0, that.limit - rendered));
+                        rendered += suggestions.length;
                         that.async && that.trigger("asyncReceived", query);
                     }
                 }
@@ -950,6 +950,9 @@
             getSelectableData: function getSelectableData($el) {
                 return $el && $el.length ? Dataset.extractData($el) : null;
             },
+            getSelectableDataset: function getSelectableDataset($el) {
+                return $el && $el.length ? $el.closest("." + this.classes.dataset).data("ttDataset") : null;
+            },
             getActiveSelectable: function getActiveSelectable() {
                 var $selectable = this._getSelectables().filter(this.selectors.cursor).first();
                 return $selectable.length ? $selectable : null;
@@ -1049,6 +1052,7 @@
             www.mixin(this);
             this.eventBus = o.eventBus;
             this.minLength = _.isNumber(o.minLength) ? o.minLength : 1;
+            this.autoselect = !!o.autoselect;
             this.input = o.input;
             this.menu = o.menu;
             this.enabled = true;
@@ -1100,28 +1104,33 @@
             },
             _onDatasetRendered: function onDatasetRendered(type, dataset, suggestions, async) {
                 this._updateHint();
-                this.eventBus.trigger("render", suggestions, async, dataset);
+                if (this.autoselect) {
+                    this.menu.setCursor(this.menu.getTopSelectable());
+                }
+                this.eventBus.trigger("render", [ suggestions, async, dataset ]);
             },
             _onAsyncRequested: function onAsyncRequested(type, dataset, query) {
-                this.eventBus.trigger("asyncrequest", query, dataset);
+                this.eventBus.trigger("asyncrequest", [ query, dataset ]);
             },
             _onAsyncCanceled: function onAsyncCanceled(type, dataset, query) {
-                this.eventBus.trigger("asynccancel", query, dataset);
+                this.eventBus.trigger("asynccancel", [ query, dataset ]);
             },
             _onAsyncReceived: function onAsyncReceived(type, dataset, query) {
-                this.eventBus.trigger("asyncreceive", query, dataset);
+                this.eventBus.trigger("asyncreceive", [ query, dataset ]);
             },
             _onFocused: function onFocused() {
                 this._minLengthMet() && this.menu.update(this.input.getQuery());
             },
             _onBlurred: function onBlurred() {
                 if (this.input.hasQueryChangedSinceLastFocus()) {
-                    this.eventBus.trigger("change", this.input.getQuery());
+                    this.eventBus.trigger("change", [ this.input.getQuery() ]);
                 }
             },
             _onEnterKeyed: function onEnterKeyed(type, $e) {
                 var $selectable;
                 if ($selectable = this.menu.getActiveSelectable()) {
+                    this.select($selectable) && $e.preventDefault();
+                } else if (this.autoselect && ($selectable = this.menu.getTopSelectable())) {
                     this.select($selectable) && $e.preventDefault();
                 }
             },
@@ -1248,10 +1257,12 @@
                 return this.input.getQuery();
             },
             select: function select($selectable) {
-                var data = this.menu.getSelectableData($selectable);
-                if (data && !this.eventBus.before("select", data.obj)) {
+                var data, dataset;
+                data = this.menu.getSelectableData($selectable);
+                dataset = this.menu.getSelectableDataset($selectable);
+                if (data && !this.eventBus.before("select", [ data.obj ])) {
                     this.input.setQuery(data.val, true);
-                    this.eventBus.trigger("select", data.obj);
+                    this.eventBus.trigger("select", [ data.obj, dataset ]);
                     this.close();
                     return true;
                 }
@@ -1262,9 +1273,9 @@
                 query = this.input.getQuery();
                 data = this.menu.getSelectableData($selectable);
                 isValid = data && query !== data.val;
-                if (isValid && !this.eventBus.before("autocomplete", data.obj)) {
+                if (isValid && !this.eventBus.before("autocomplete", [ data.obj ])) {
                     this.input.setQuery(data.val);
-                    this.eventBus.trigger("autocomplete", data.obj);
+                    this.eventBus.trigger("autocomplete", [ data.obj ]);
                     return true;
                 }
                 return false;
@@ -1276,7 +1287,7 @@
                 data = this.menu.getSelectableData($candidate);
                 payload = data ? data.obj : null;
                 cancelMove = this._minLengthMet() && this.menu.update(query);
-                if (!cancelMove && !this.eventBus.before("cursorchange", payload)) {
+                if (!cancelMove && !this.eventBus.before("cursorchange", [ payload ])) {
                     this.menu.setCursor($candidate);
                     if (data) {
                         this.input.setInputValue(data.val);
@@ -1284,7 +1295,7 @@
                         this.input.resetInputValue();
                         this._updateHint();
                     }
-                    this.eventBus.trigger("cursorchange", payload);
+                    this.eventBus.trigger("cursorchange", [ payload ]);
                     return true;
                 }
                 return false;
@@ -1357,7 +1368,8 @@
                         input: input,
                         menu: menu,
                         eventBus: eventBus,
-                        minLength: o.minLength
+                        minLength: o.minLength,
+                        autoselect: o.autoselect
                     }, www);
                     $input.data(keys.www, www);
                     $input.data(keys.typeahead, typeahead);
@@ -1481,7 +1493,7 @@
             });
         }
         function buildHintFromInput($input, www) {
-            return $input.clone().addClass(www.classes.hint).removeData().css(www.css.hint).css(getBackgroundStyles($input)).prop("readonly", true).removeAttr("id name placeholder required").attr({
+            return $input.clone().addClass(www.classes.hint).removeData().css(www.css.hint).css(getBackgroundStyles($input)).prop("readonly", true).prop("required", false).removeAttr("id name placeholder").attr({
                 autocomplete: "off",
                 spellcheck: "false",
                 tabindex: -1
